@@ -8,6 +8,6 @@ public class HelloWorld {
 
  //helloworld ARITA
 
-//JE
+//Je
 //https://github.com/migesve/wall-e.git
 //cc les nazerrrr
