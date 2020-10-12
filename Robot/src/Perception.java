@@ -8,22 +8,28 @@ import lejos.robotics.filter.MeanFilter;
 
 public class Perception {
 
+
 	private boolean touch;
 	EV3TouchSensor touchSensor;
-	EV3ColorSensor colorSensor;
-	SampleProvider colorProvider;
-	float [] colorSample; //dans case 0 == red, case 1 == green, case 2 == blue
-	float R,G,B;
+	static EV3ColorSensor colorSensor;
+	static SampleProvider colorProvider;
+	static float [] colorSample; //dans case 0 == red, case 1 == green, case 2 == blue
+	static int R,G,B;
 
-	public void getCouleur() { //sans retour mais met les valeur dans R, G, B
-		Port capteurCouleur = LocalEV3.get().getPort("2"); //capteur couleur = le capteur numéro 2
+
+	public static void getCouleur() { //sans retour mais met les valeur dans R, G, B
+		Port capteurCouleur = LocalEV3.get().getPort("S2"); //capteur couleur = le capteur numéro 2
 		colorSensor=new EV3ColorSensor(capteurCouleur);
 		colorProvider =colorSensor.getRGBMode();
 		colorSample = new float [colorProvider.sampleSize()];
 		colorProvider.fetchSample(colorSample, 0);
-		R=colorSample[0];
-		G=colorSample[1];
-		B=colorSample[2];
+		R=(int)(255*colorSample[0]);
+		G=(int)(255*colorSample[1]);
+		B=(int)(255*colorSample[2]);
+		System.out.println(R);
+		System.out.println(G);	
+		System.out.println(B);	
+		Delay.msDelay(10000);
 
 	}
 
@@ -41,5 +47,11 @@ public class Perception {
 			this.touch=false;
 			return touch; 
 		}
+	}
+
+	public static void main(String[] args) {
+		getCouleur();
+	}
+
 	}
 
