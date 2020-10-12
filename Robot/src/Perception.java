@@ -14,8 +14,7 @@ public class Perception {
 	public int getCouleur() {
 		Port capteurCouleur = LocalEV3.get().getPort("D");
 		colorSensor=new EV3ColorSensor(capteurCouleur);
-		colorSensor.
-		return colorSensor.getColorID();
+		return colorSensor.getColorIDMode();
 	}
 
 
