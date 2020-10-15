@@ -1,6 +1,6 @@
-import lejos.hardware.sensor.EV3ColorSensor;
+package src;
+
 import lejos.hardware.sensor.EV3IRSensor;
-import lejos.hardware.Button;
 import lejos.hardware.port.Port;
 import lejos.robotics.SampleProvider;
 import lejos.robotics.filter.MeanFilter;
