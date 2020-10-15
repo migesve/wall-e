@@ -7,7 +7,7 @@ import lejos.robotics.filter.MeanFilter;
 
 public class IRSensor {
 
-`
+
     private static float[] distance;
     private static SampleProvider average;
     private static EV3IRSensor distanceSensor;
