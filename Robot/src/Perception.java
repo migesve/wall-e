@@ -28,7 +28,7 @@ public class Perception {
     	distanceSensor = new EV3IRSensor(IRSensor);
 		capteurCouleur = new EV3ColorSensor (couleur);
 		capteurUltra = new EV3UltrasonicSensor (ultra);
-		capteurTouche= new EV3TouchSensor (touche); //IRSensor
+		capteurTouche= new EV3TouchSensor (touche); //IRSensor miges
     	average = new MeanFilter(distanceSensor.getDistanceMode(), 1);
     	distance=new float[average.sampleSize()];
 		colorProvider=capteurCouleur.getRGBMode();
