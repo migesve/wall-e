@@ -1,5 +1,4 @@
 package src;
-
 import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.hardware.sensor.EV3IRSensor;
 import lejos.hardware.sensor.EV3TouchSensor;
@@ -10,32 +9,47 @@ import lejos.robotics.SampleProvider;
 import lejos.robotics.filter.MeanFilter;
 import lejos.utility.Delay;
 
-//mauvaise version
+
 public class Perception {
+	//CAPTEUR
 	private EV3ColorSensor capteurCouleur;
 	private EV3UltrasonicSensor capteurUltra;
 	private EV3TouchSensor capteurTouche;
 	private EV3IRSensor distanceSensor;
     private static float[] distance;
+   // Sample provider
     private static SampleProvider average;
+    private SampleProvider colorProvider;
+    private SampleProvider touchProvider;
+    //Tableau 
 	private float [] colorSample; // tableau des couleurs
-	private SampleProvider colorProvider;
+	private float [] touchSample;
+	
+	//
 	private int R,G,B;
+	private boolean touche;
 	
 	
 	// ********************** CONSTRUCTEUR ******************************
-	public Perception (Port couleur, Port ultra, Port touche, Port IRSensor) {
-    	distanceSensor = new EV3IRSensor(IRSensor);
+	public Perception (Port couleur, Port ultra, Port touche) { //Port IRSensor
+    	//distanceSensor = new EV3IRSensor(IRSensor);
 		capteurCouleur = new EV3ColorSensor (couleur);
 		capteurUltra = new EV3UltrasonicSensor (ultra);
 		capteurTouche= new EV3TouchSensor (touche); //IRSensor miges
-    	average = new MeanFilter(distanceSensor.getDistanceMode(), 1);
-    	distance=new float[average.sampleSize()];
+    	
+		//average = new MeanFilter(distanceSensor.getDistanceMode(), 1);
+    	
+    	//distance=new float[average.sampleSize()];
 		colorProvider=capteurCouleur.getRGBMode();
+		touchProvider=capteurTouche.getTouchMode();
+		
 		colorSample = new float [colorProvider.sampleSize()];
+		touchSample = new float [touchProvider.sampleSize()];
+		
 		R=0;
 		G=0;
-		B=0;	
+		B=0;
+		this.touche=false;
 		
 	}
 
@@ -47,9 +61,11 @@ public class Perception {
 	}
 
 
+
 	public EV3UltrasonicSensor getCapteurUltra() {
 		return capteurUltra;
 	}
+
 
 
 	public EV3TouchSensor getCapteurTouche() {
@@ -57,9 +73,47 @@ public class Perception {
 	}
 
 
+
+	public EV3IRSensor getDistanceSensor() {
+		return distanceSensor;
+	}
+
+
+
+	public static float[] getDistance() {
+		return distance;
+	}
+
+
+
+	public static SampleProvider getAverage() {
+		return average;
+	}
+
+
+
+	public SampleProvider getColorProvider() {
+		return colorProvider;
+	}
+
+
+
+	public SampleProvider getTouchProvider() {
+		return touchProvider;
+	}
+
+
+
 	public float[] getColorSample() {
 		return colorSample;
 	}
+
+
+
+	public float[] getTouchSample() {
+		return touchSample;
+	}
+
 
 
 	public int getR() {
@@ -67,18 +121,18 @@ public class Perception {
 	}
 
 
+
 	public int getG() {
 		return G;
 	}
 
 
+
 	public int getB() {
 		return B;
 	}
-	
-	public SampleProvider getColorProvider() {
-		return colorProvider;
-	}
+
+
 	
 	// ****************************** METHODES******************************
 	public void getCouleur() {
@@ -88,6 +142,17 @@ public class Perception {
 		B=(int)(255*colorSample[2]);
 		}
 
+
+
+	public boolean getTouche() {
+		touchProvider.fetchSample(touchSample, 0);
+		if (touchSample[0]==1)
+			touche=true;
+		else
+			touche=false;
+		return touche;
+
+	}
 
 
 
@@ -103,3 +168,4 @@ public class Perception {
 	
 	
 }
+
