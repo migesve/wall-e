@@ -31,15 +31,14 @@ public class Perception {
 	
 	
 	// ********************** CONSTRUCTEUR ******************************
-	public Perception (Port couleur, Port ultra, Port touche) { //Port IRSensor
-    	//distanceSensor = new EV3IRSensor(IRSensor);
+	public Perception (Port couleur, Port ultra, Port touche, Port ultra) { //Port IRSensor
 		capteurCouleur = new EV3ColorSensor (couleur);
 		capteurUltra = new EV3UltrasonicSensor (ultra);
-		capteurTouche= new EV3TouchSensor (touche); //IRSensor miges
+		capteurTouche= new EV3TouchSensor (touche);
+
+    	distanceSensor = new EV3IRSensor(IRSensor);
+		average = new MeanFilter(distanceSensor.getDistanceMode(), 1);
     	
-		//average = new MeanFilter(distanceSensor.getDistanceMode(), 1);
-    	
-    	//distance=new float[average.sampleSize()];
 		colorProvider=capteurCouleur.getRGBMode();
 		touchProvider=capteurTouche.getTouchMode();
 		
@@ -151,6 +150,13 @@ public class Perception {
 		else
 			touche=false;
 		return touche;
+
+	}
+	
+	public float getDistance() {
+    	distance=new float[average.sampleSize()];
+		distance.fetchSample(distanceSensor, 0);
+		return distance;
 
 	}
 
