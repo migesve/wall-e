@@ -1,3 +1,5 @@
+package src;
+
 import lejos.hardware.ev3.LocalEV3;
 
 public class Exe {
