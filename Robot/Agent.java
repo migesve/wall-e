@@ -1,5 +1,4 @@
 import java.awt.Color;
-
 import lejos.hardware.ev3.LocalEV3;
 import lejos.utility.Timer;
 import lejos.utility.TimerListener;
