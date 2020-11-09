@@ -8,7 +8,7 @@ import lejos.robotics.navigation.MovePilot;
 import lejos.utility.Delay;
 
 
-public class Actionneur 
+public class Actionneur {
     public static final int OUVERTURE_MAX=0, FERMETURE_MAX=1;
     private Chassis chassis;
     private MovePilot mp;
