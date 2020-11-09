@@ -1,5 +1,4 @@
 import lejos.hardware.ev3.LocalEV3;
-//test ari
 
 public class Exe {
 
@@ -10,6 +9,6 @@ public class Exe {
                 LocalEV3.get().getPort("C"));
         //a.fermerPinces();
         //a.ouvrirPinces();
-        a.rotation(360);
+        a.rotation(360,true);
     }
 }

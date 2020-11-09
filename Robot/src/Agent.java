@@ -1,4 +1,5 @@
 import java.awt.Color;
+
 import lejos.hardware.ev3.LocalEV3;
 import lejos.utility.Timer;
 import lejos.utility.TimerListener;
@@ -10,7 +11,6 @@ public class Agent {
 
 	private boolean requestPerpendiculaire;
 	private boolean requestLineFollower;
-	private Color colorToFollow;
 
 	public Agent() {
 		action = new Actionneur(
@@ -26,13 +26,14 @@ public class Agent {
 	}
 	//Suit la ligne de couleur c
 	public void lineFollower(Color c) {
-			colorToFollow = c;
-			requestLineFollower = true;
+		if (perception.currentColor == c) {
+			if (!action.isMoving()) action.avancer(200,true);
+		}
+		requestLineFollower = true;
 	}
 	public void perpendiculaire() {
 		float dist = perception.distance;
-		action.rotation(15);
-		try {Thread.sleep(1000);} catch (InterruptedException e) {}
+		action.rotation(20,false);
 		action.startRotating(dist < perception.distance);
 		requestPerpendiculaire = true;
 	}
@@ -45,15 +46,12 @@ public class Agent {
 			perception.update();
 			if(requestPerpendiculaire && perception.distance > previousDist) {
 				action.stop();
+				action.updateDirection(action.getMouvement().getAngleTurned());
 				requestPerpendiculaire = false;
 			}
-			if(requestLineFollower) {
-				if (perception.currentColor == colorToFollow) {
-					if (!action.isMoving()) action.avancer(200);
-				}else {
-					action.stop();
-					requestLineFollower = false;
-				}
+			if(requestLineFollower && perception.currentColor != previousColor) {
+				action.stop();
+				requestLineFollower = false;
 			}
 			//les variables "previous" prennent la valeur des variables de perception actuelles
 			//à la fin de la méthode. Ainsi, lorsqu'on appelera cette méthode dans 20s, on commencera

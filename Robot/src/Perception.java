@@ -41,10 +41,10 @@ public class Perception {
 	public volatile boolean detection;
 
 	// ********************** CONSTRUCTEUR ******************************
-	public Perception (Port couleur, Port ultra, Port touche) { //Port IRSensor
-		capteurCouleur = new EV3ColorSensor (couleur);
-		capteurDistance= new EV3UltrasonicSensor (ultra);
-		capteurTouche= new EV3TouchSensor (touche);
+	public Perception (Port touche, Port couleur, Port ultra) { //Port IRSensor
+		capteurCouleur = new EV3ColorSensor(couleur);
+		capteurDistance= new EV3UltrasonicSensor(ultra);
+		capteurTouche= new EV3TouchSensor(touche);
 		//capteurIR = new EV3IRSensor(ultra);
 
 		distanceProvider = capteurDistance.getDistanceMode();

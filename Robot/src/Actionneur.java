@@ -4,12 +4,12 @@ import lejos.hardware.port.Port;
 import lejos.robotics.chassis.Chassis;
 import lejos.robotics.chassis.Wheel;
 import lejos.robotics.chassis.WheeledChassis;
+import lejos.robotics.navigation.Move;
 import lejos.robotics.navigation.MovePilot;
 import lejos.utility.Delay;
 
 
 public class Actionneur {
-    public static final int OUVERTURE_MAX=0, FERMETURE_MAX=1;
     private Chassis chassis;
     private MovePilot mp;
     private EV3LargeRegulatedMotor moteurGauche;
@@ -31,12 +31,15 @@ public class Actionneur {
     public void update() {
     	
     }
-    public void avancer(int speed) {
+    public Move getMouvement() {
+    	return mp.getMovement();
+    }
+    public void avancer(int speed, boolean immediateReturn) {
         mp.setAngularSpeed(Math.abs(speed));
         if (speed > 0) {
-            mp.forward();
+            mp.travel(Double.POSITIVE_INFINITY, immediateReturn);
         }else if (speed < 0) {
-            mp.backward();
+        	mp.travel(Double.NEGATIVE_INFINITY, immediateReturn);
         }else {
             stop();
         }
@@ -44,10 +47,11 @@ public class Actionneur {
     public void stop () {
         mp.stop();
     }
-    public void rotation(int angle) {
-    	direction += angle;
-        mp.setAngularSpeed(100);
-        mp.rotate(angle);
+    public void rotation(double angle, boolean immediateReturn) {
+    	mp.setAngularSpeed(100);
+    	updateDirection(angle);
+    	direction %= 360;
+        mp.rotate(angle,immediateReturn);
     }
     // b = true --> rotating left
     // b = false -> rotating right
@@ -58,6 +62,10 @@ public class Actionneur {
     	 }else {
     		 mp.rotateRight();
     	 }
+    }
+    public void updateDirection(double angle) {
+    	direction += angle;
+    	direction %= 360;
     }
     public void travelArc(double radius, double distance) {
     	mp.travelArc(radius,distance,true);
