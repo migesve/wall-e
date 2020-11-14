@@ -68,6 +68,9 @@ public class Actionneur {
     public void updateDirection(double angle) {
     	direction += angle;
     	direction %= 360;
+        if (direction < 0) {
+            direction += 360;
+        }
     }
     public void travelArc(double radius, double distance) {
     	mp.travelArc(radius,distance,true);
