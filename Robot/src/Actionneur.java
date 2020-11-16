@@ -15,9 +15,8 @@ public class Actionneur {
 	private EV3LargeRegulatedMotor moteurDroit;
 	private EV3MediumRegulatedMotor moteurPince;
 
-	private boolean statePinces;
-
-	public int direction;
+	private boolean pincesOuvertes;
+	private int direction;
 
 	public Actionneur(Port portA, Port portB, Port portC) {
 		moteurGauche = new EV3LargeRegulatedMotor(portA);
@@ -27,6 +26,9 @@ public class Actionneur {
 		Wheel wheel2 = WheeledChassis.modelWheel(moteurDroit,  56).offset( 60);
 		chassis = new WheeledChassis(new Wheel[] { wheel1, wheel2 }, WheeledChassis.TYPE_DIFFERENTIAL);
 		mp = new MovePilot(chassis);
+		mp.setAngularSpeed(150);
+		mp.setLinearAcceleration(100);
+		mp.setLinearSpeed(150);
 		moteurPince.setSpeed(800);
 	}
 	public void update() {
@@ -35,28 +37,36 @@ public class Actionneur {
 	public Move getMouvement() {
 		return mp.getMovement();
 	}
-	public void avancer(int speed, boolean immediateReturn) {
-		mp.setAngularSpeed(Math.abs(speed));
-		if (speed > 0) {
-			mp.travel(Double.POSITIVE_INFINITY, immediateReturn);
-		}else if (speed < 0) {
-			mp.travel(Double.NEGATIVE_INFINITY, immediateReturn);
-		}else {
-			stop();
-		}
+	public void avancer(double distance, boolean immediateReturn) {
+		mp.travel(distance,false);
 	}
-	public void stop () {
+	public void stop() {
 		mp.stop();
 	}
 	public void rotation(double angle, boolean immediateReturn) {
-		mp.setAngularSpeed(100);
+		
 		updateDirection(angle);
-		mp.rotate(angle,immediateReturn);
+		mp.rotate(angle);
+	}
+	public void travelArc(double radius, double distance, boolean immediateReturn) {
+		mp.setAngularSpeed(100);
+		mp.travelArc(radius,distance,false);
+	}
+	public void ouvrirPinces() {
+		moteurPince.forward();
+		Delay.msDelay(800);
+		moteurPince.stop();
+		pincesOuvertes = true;
+	}
+	public void fermerPinces() {
+		moteurPince.backward();
+		Delay.msDelay(800);
+		moteurPince.stop();
+		pincesOuvertes = false;
 	}
 	// b = true --> rotating left
 	// b = false -> rotating right
 	public void startRotating(boolean b) {
-		mp.setAngularSpeed(100);
 		if (b) {
 			mp.rotateLeft();
 		}else {
@@ -70,25 +80,10 @@ public class Actionneur {
 			direction += 360;
 		}
 	}
-	public void travelArc(double radius, double distance) {
-		mp.travelArc(radius,distance,true);
+	public boolean pincesOuvertes() {
+		return pincesOuvertes;
 	}
 	public boolean isMoving() {
 		return mp.isMoving();
-	}
-	public void ouvrirPinces() {
-		moteurPince.forward();
-		Delay.msDelay(800);
-		moteurPince.stop();
-		statePinces = true;
-	}
-	public void fermerPinces() {
-		moteurPince.backward();
-		Delay.msDelay(800);
-		moteurPince.stop();
-		statePinces = false;
-	}
-	public boolean getStatePinces() {
-		return statePinces;
 	}
 }
