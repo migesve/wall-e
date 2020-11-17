@@ -4,28 +4,23 @@ import lejos.hardware.port.Port;
 import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.hardware.sensor.EV3TouchSensor;
 import lejos.hardware.sensor.EV3UltrasonicSensor;
-import lejos.robotics.RangeFinder;
 import lejos.robotics.SampleProvider;
-import lejos.robotics.objectdetection.Feature;
-import lejos.robotics.objectdetection.FeatureDetector;
-import lejos.robotics.objectdetection.RangeFeatureDetector;
 
 
 public class Perception {
 	/**
 	 * Capteurs.
 	 */
+	private final EV3TouchSensor capteurTouche;
 	private final EV3ColorSensor capteurCouleur;
 	private final EV3UltrasonicSensor capteurDistance;
-	private final EV3TouchSensor capteurTouche;
-
 	/**
 	 * Sample providers
 	 */
 	private SampleProvider colorProvider;
 	private SampleProvider touchProvider;
 	private SampleProvider distanceProvider;
-	private SampleProvider irProvider;
+	//private SampleProvider irProvider;
 
 	/**
 	 * data
@@ -33,57 +28,48 @@ public class Perception {
 	private float [] colorSample; // tableau des couleurs
 	private float [] touchSample;
 	private float [] distanceSample;
-	private float [] irSample;
+	//private float [] irSample;
 
 	/**
 	 * attributs public mis à jour !!!
 	 * volatile = accesseur désynchronisé
 	 */
-	public volatile Color currentColor;
+	public volatile Color color;
 	public volatile float distance;
 	public volatile boolean touch;
-	public volatile boolean detection;
-
-	public int MAX_DISTANCE; // en centimètre
-	public int PERIOD;
-	private FeatureDetector fd;
+	//public volatile boolean detection;
 
 	//=============================
 
 	// ********************** CONSTRUCTEUR ******************************
 	public Perception (Port touche, Port couleur, Port ultra) { //Port IRSensor
+		capteurTouche = new EV3TouchSensor(touche);
 		capteurCouleur = new EV3ColorSensor(couleur);
 		capteurDistance= new EV3UltrasonicSensor(ultra);
-		capteurTouche= new EV3TouchSensor(touche);
-		//capteurIR = new EV3IRSensor(ultra);
-
-		distanceProvider = capteurDistance.getDistanceMode();
+		
+		capteurTouche.setCurrentMode(0);
+		capteurCouleur.setCurrentMode(2);
+		capteurDistance.setCurrentMode(0);
+		
 		colorProvider = capteurCouleur.getRGBMode();
 		touchProvider = capteurTouche.getTouchMode();
-		irProvider = capteurDistance.getListenMode();
-
+		distanceProvider = capteurDistance.getDistanceMode();
+		
 		colorSample = new float [colorProvider.sampleSize()];
 		touchSample = new float [touchProvider.sampleSize()];
 		distanceSample = new float [distanceProvider.sampleSize()];
-		irSample = new float [irProvider.sampleSize()];
 
-		currentColor = new Color(0,0,0);
-		distance = 0;
-		touch = false;
-		detection = false;
-
-		MAX_DISTANCE = 250;
-
-		PERIOD=10000;
-
-		fd = new RangeFeatureDetector((RangeFinder)capteurDistance, MAX_DISTANCE, PERIOD);
+		color = getCouleur();
+		distance = getDistance();
+		touch = getTouche();
+		//detection = false;
 	}
 	// ****************************** METHODES******************************
 	public void update() {
-		currentColor = getCouleur();
+		color = getCouleur();
 		distance = getDistance();
 		touch = getTouche();
-		detection = getIR();
+		//detection = getIR();
 	}
 	public Color getCouleur() {
 		colorProvider.fetchSample(colorSample, 0);
@@ -109,14 +95,20 @@ public class Perception {
 
 	public boolean getTouche() {
 		touchProvider.fetchSample(touchSample, 0);
-		return touchSample[0]==1 ? true : false;
+		return touchSample[0] == 1;
 	}
 
 	//return en cm
 	public float getDistance() {
-		//capteurDistance.disable(); // jsp si on en a besoin, il faut tester
+		//capteurDistance.setCurrentMode(0);
+		
 		distanceProvider.fetchSample(distanceSample, 0);
-		return 100*distanceSample[0];
+		float dist = 100*distanceSample[0];
+		if (Float.isNaN(dist)) { //NaN = Not A Number
+			return Float.POSITIVE_INFINITY;
+		}else {
+			return dist;
+		}
 
 		/*//test
 		  System.out.println(distanceSample[0]);
@@ -124,19 +116,16 @@ public class Perception {
 
 	}
 
-	public boolean getIR() {  //true = il y a qqln 
-		//capteurDistance.enable(); //tester avec un autre robot si getIR() marche sans cette ligne
-		irProvider.fetchSample(irSample, 0);
-		return irSample[0]==1 ? true : false;
-
-		/*test
-		System.out.println(irSample[0]);
-		Delay.msDelay(10000);*/
-	}
-	public void detectionObjet() {
-		Feature result = fd.scan();
-		if(result != null) {
-			System.out.println("Range: " + result.getRangeReading().getRange());
-		}
-	}
+//	public boolean getIR() {  //true = il y a qqln 
+//		//capteurDistance.enable(); //tester avec un autre robot si getIR() marche sans cette ligne
+//		capteurDistance.setCurrentMode(1);
+//		irProvider = capteurDistance.getListenMode();
+//		irSample = new float [irProvider.sampleSize()];
+//		irProvider.fetchSample(irSample, 0);
+//		return irSample[0]==1 ? true : false;
+//
+//		/*test
+//		System.out.println(irSample[0]);
+//		Delay.msDelay(10000);*/
+//	}
 }
