@@ -1,8 +1,3 @@
-import java.awt.Color;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-
 import lejos.hardware.Button;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.utility.Delay;
@@ -80,7 +75,7 @@ public class Agent {
 	 */
 	public void testCouleur() {
 		while(true) {
-			System.out.println(perception.color);
+			System.out.println(getPerception().getCouleur());
 			Delay.msDelay(MS_DELAY);
 			if (Button.ESCAPE.isDown()) {
 				return;
@@ -104,6 +99,21 @@ public class Agent {
 				action.updateDirection(action.getMouvement().getAngleTurned());//on actualise notre direction.
 			}
 		} 
+		return true;
+	}
+	/**
+	 * Se repositionne à 0°, en fonction de la direction actuelle. Donc dans la même direction que le robot
+	 * était dans sa position de départ.
+	 * @return true à la fin de l'opération.
+	 */
+	public boolean resetDirection() {
+		int angle = action.getDirection(); //on récupère l'opposé de la direction actuelle.
+		if (angle > 180) {
+			angle = 360 - angle;
+		}else if(angle < 180) {
+			angle = - angle;
+		}
+		action.rotation(angle,100,false); //et on tourne de cet angle.
 		return true;
 	}
 	/**
@@ -135,9 +145,9 @@ public class Agent {
 	}
 	/**
 	 * Le robot ne fait qu'avancer tant qu'il suit la couleur passée en paramètre.
-	 * @param c La couleur à suivre.
+	 * @param color La couleur à suivre.
 	 */
-	public void suivreColor(Color c) {
+	public void suivreColor(String color) {
 //		//action.avancer(3000);
 //		while (perception.color.equals(c)) {
 //			Delay.msDelay(20);
