@@ -44,8 +44,8 @@ public class Actionneur {
 		EV3LargeRegulatedMotor moteurGauche = new EV3LargeRegulatedMotor(portA);
 		EV3LargeRegulatedMotor moteurDroit = new EV3LargeRegulatedMotor(portC);
 		moteurPince = new EV3MediumRegulatedMotor(portB);
-		Wheel wheel1 = WheeledChassis.modelWheel(moteurGauche, 56).offset(-60.8); //unité = mm. L'offset est le décalage de la roue par rapport au centre de l'essieu.
-		Wheel wheel2 = WheeledChassis.modelWheel(moteurDroit,  56).offset( 60.8);
+		Wheel wheel1 = WheeledChassis.modelWheel(moteurGauche, 56).offset(-60.2); //unité = mm. L'offset est le décalage de la roue par rapport au centre de l'essieu.
+		Wheel wheel2 = WheeledChassis.modelWheel(moteurDroit,  56).offset( 60.2);
 		Chassis chassis = new WheeledChassis(new Wheel[] { wheel1, wheel2 }, WheeledChassis.TYPE_DIFFERENTIAL);
 		mp = new MovePilot(chassis);
 		moteurPince.setSpeed(800); //Vitesse d'ouverture/fermeture des pinces reste inchangée.
@@ -73,8 +73,8 @@ public class Actionneur {
 	}
 	/**
 	 * Rotation sur lui-même.
-	 * @param angle Angle de rotation. Positif = left ; négatif = right.
-	 * @param speed Vitesse de rotation.
+	 * @param angle Angle de rotation en degré. Positif = left ; négatif = right.
+	 * @param speed Vitesse de rotation en degré/s.
 	 * @param nonBloquante Indique si la méthode retourne directement ou non.
 	 */
 	public void rotation(double angle, double speed, boolean nonBloquante) {
@@ -106,6 +106,7 @@ public class Actionneur {
 	 * Méthode bloquante.
 	 */
 	public void ouvrirPinces() {
+		if (pincesOuvertes) return;
 		moteurPince.forward();
 		Delay.msDelay(1500);
 		moteurPince.stop();
@@ -116,6 +117,7 @@ public class Actionneur {
 	 * Méthode bloquante.
 	 */
 	public void fermerPinces() {
+		if (!pincesOuvertes) return;
 		moteurPince.backward();
 		Delay.msDelay(1500);
 		moteurPince.stop();
