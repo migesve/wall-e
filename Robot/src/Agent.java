@@ -30,32 +30,30 @@ public class Agent {
 	}
 	/**
 	 * Dès qu'on pense avoir détécté un palet, on appelle cette méthode pour le récupérer.
+	 * @param tryDistance Distance sur laquelle le robot va essayer d'avancer.
+	 * @param speed Vitesse à laquelle le robot va s'avancer pinces ouvertes. Après tests, si vitesse > 300 le palet rebondit sur le balancier.
 	 * @return Retourne true ou false selon que l'on a réussi à récupérer un palet ou non.
 	 */
-	public boolean prendrePalet() {
+	public boolean prendrePalet(int tryDistance, int speed) {
 		if (!action.pincesOuvertes()) { //Si les pinces sont fermées ...
-			action.ouvrirPinces(); //...on les ouvre !
+			action.ouvrirPinces(true); //...on les ouvre !
 		}
-		//Distance sur laquelle le robot va avancer pour tenter de récupérer un palet.
-		int tryDistance = 600;
 		//On fait avancer le robot sur cette distance, avec un retour immédiat.
-		action.avancer(tryDistance,200,true);
+		action.avancer(tryDistance,speed,true);
 		//Tant que le capteur tactile renvoie false ...
 		while(!perception.touch) {
 			// ...on attend 20ms, histoire de réduire le nombre d'appels d'une boucle true.
-			Delay.msDelay(20);
+			Delay.msDelay(MS_DELAY);
 			//Si pendant le trajet de 'tryDistance' le robot n'a toujours rien trouvé (s'il
 			//s'est arrêté) c'est qu'il n'a pas trouvé de palet, on return false.
 			if(!action.isMoving()) {
-				action.fermerPinces();
+				action.fermerPinces(false);
 				return false;
 			}
 		}
 		//Si perception.touch est passé à 'true' :
 		action.stop(); //on stop le robot
-		action.fermerPinces(); //on serre les pinces
-		System.out.println(action.getDirection());
-		Delay.msDelay(10000);
+		action.fermerPinces(false); //on serre les pinces
 		return true; 
 	}
 	/**
@@ -66,7 +64,7 @@ public class Agent {
 			System.out.println(perception.distance);
 			Delay.msDelay(MS_DELAY);
 			if (Button.ESCAPE.isDown()) {
-				return;
+				System.exit(0);
 			}
 		}
 	}
@@ -75,10 +73,10 @@ public class Agent {
 	 */
 	public void testCouleur() {
 		while(true) {
-			System.out.println(getPerception().getCouleur());
+			System.out.println(perception.color);
 			Delay.msDelay(MS_DELAY);
 			if (Button.ESCAPE.isDown()) {
-				return;
+				System.exit(0);
 			}
 		}
 	}
@@ -113,7 +111,7 @@ public class Agent {
 		}else if(angle < 180) {
 			angle = - angle;
 		}
-		action.rotation(angle,100,false); //et on tourne de cet angle.
+		action.rotation(angle,150,false); //et on tourne de cet angle.
 		return true;
 	}
 	/**
@@ -133,27 +131,65 @@ public class Agent {
 		}
 		//Dès qu'on sort de la boucle, on a notre attribut minDistAngle qui représente
 		//l'angle de l'objet le plus proche de nous.
-		Delay.msDelay(1000);
+		Delay.msDelay(200);
 		//Si cet angle est supérieur à 180°, alors il sera préférable de tourner négativement :)
 		if (minDistAngle > 180) {
 			minDistAngle = - (minDistAngle % 180);
 		}
-		System.out.println(minDistAngle); //test
-		Delay.msDelay(6000);
-		action.rotation(minDistAngle,120,false); //on se dirige vers cet objet avec une vitesse plus soutenue, méthode blocante of course. 
+		action.rotation(minDistAngle,160,false); //on se dirige vers cet objet avec une vitesse plus soutenue, méthode blocante of course. 
+		return true;
+	}
+	/**
+	 * Le robot avance jusqu'à ce qu'il détecte la couleur en paramètre.
+	 * @param c Le String de la couleur.
+	 * @param speed La vitesse à laquelle le robot va avancer.
+	 * @return true si le robot s'est arreté car il a perçu la ligne, 
+	 * false s'il a du s'arrêter au bout d'une distance d'essai initialisée localement à 2000 mm.
+	 */
+	public boolean avancerJusquaColor(String c, int speed) {
+		if (!Perception.isAColor(c)) return false; //throw une exception ?
+		int tryDistance = 2000;
+		action.avancer(tryDistance, speed, true);
+		while(!perception.color.equals(c)) {
+			Delay.msDelay(MS_DELAY);
+			if (!action.isMoving()) {
+				return false;
+			}
+		}
+		action.stop();
 		return true;
 	}
 	/**
 	 * Le robot ne fait qu'avancer tant qu'il suit la couleur passée en paramètre.
 	 * @param color La couleur à suivre.
 	 */
-	public void suivreColor(String color) {
-//		//action.avancer(3000);
-//		while (perception.color.equals(c)) {
-//			Delay.msDelay(20);
-//		}
-//		action.stop();
+	public boolean suivreColor(String c) {
+		if (!Perception.isAColor(c)) return false; //should we throw an exception ?
+		boolean positif = true;
+		while(true) {
+			if (Button.ESCAPE.isDown()) {
+				System.exit(0);
+			}
+			action.avancer(3000, 80, true);
+			while(perception.color.equals(c)) {
+				Delay.msDelay(MS_DELAY);
+			}
+			action.stop();
+			action.rotation(positif ? 10 : -10, 80,false);
+			if (!perception.color.equals(c)) {
+				positif = !positif;
+				action.rotation(positif ? 20 : -20, 80,false);
+			}
+		}
 	}
+	/**
+	 * Classe qui implémente l'interface TimerListener.
+	 * Un Timer utilise un thread secondaire pour faire un appel itératif de la méthode
+	 * timedOut de l'interface TimerListener. On utilise cette itération pour mettre à jour
+	 * nos attributs de perception.
+	 * @author moi <3
+	 *
+	 */
 	class Boucle implements TimerListener {
 		@Override
 		public void timedOut() {
