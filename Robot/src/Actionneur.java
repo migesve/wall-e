@@ -23,6 +23,19 @@ import lejos.utility.Delay;
  * @author Nous <3
  */
 public class Actionneur {
+	private PincesThread pincesThread;
+	/**
+	 * Indique si on désire ouvrir les pinces sans bloquer le thread principal.
+	 */
+	private boolean requireOuvrirPinces;
+	/**
+	 * Indique si on désire fermer les pinces sans bloquer le thread principal.
+	 */
+	private boolean requireFermerPinces;
+	/**
+	 * Indique si les pinces sont ouvertes ou non.
+	 */
+	private volatile boolean pincesOuvertes;
 	/**
 	 * Classe qui contrôle un châssis.
 	 */
@@ -32,10 +45,6 @@ public class Actionneur {
 	 */
 	private EV3MediumRegulatedMotor moteurPince;
 	/**
-	 * Indique si les pinces sont ouvertes ou non.
-	 */
-	private boolean pincesOuvertes;
-	/**
 	 * Direction actuelle du robot. Est toujours compris entre 0 inclus et 360 exclu.
 	 */
 	private int direction;
@@ -44,11 +53,13 @@ public class Actionneur {
 		EV3LargeRegulatedMotor moteurGauche = new EV3LargeRegulatedMotor(portA);
 		EV3LargeRegulatedMotor moteurDroit = new EV3LargeRegulatedMotor(portC);
 		moteurPince = new EV3MediumRegulatedMotor(portB);
-		Wheel wheel1 = WheeledChassis.modelWheel(moteurGauche, 56).offset(-60.2); //unité = mm. L'offset est le décalage de la roue par rapport au centre de l'essieu.
-		Wheel wheel2 = WheeledChassis.modelWheel(moteurDroit,  56).offset( 60.2);
+		Wheel wheel1 = WheeledChassis.modelWheel(moteurGauche, 56).offset(-59.9); //unité = mm. L'offset est le décalage de la roue par rapport au centre de l'essieu.
+		Wheel wheel2 = WheeledChassis.modelWheel(moteurDroit,  56).offset( 59.9);
 		Chassis chassis = new WheeledChassis(new Wheel[] { wheel1, wheel2 }, WheeledChassis.TYPE_DIFFERENTIAL);
 		mp = new MovePilot(chassis);
-		moteurPince.setSpeed(800); //Vitesse d'ouverture/fermeture des pinces reste inchangée.
+		moteurPince.setSpeed(1000); //Vitesse d'ouverture/fermeture des pinces reste inchangée.
+		pincesThread = new PincesThread();
+		pincesThread.start();
 	}
 	public void update() {
 		
@@ -103,25 +114,56 @@ public class Actionneur {
 	}
 	/**
 	 * Ouvre les pinces du robot, et met à jour l'attribut <code>pincesOuvertes</code>.
-	 * Méthode bloquante.
+	 * Méthode bloquante si le paramètre est 'false'.
+	 * @param nonBloquante
 	 */
-	public void ouvrirPinces() {
-		if (pincesOuvertes) return;
-		moteurPince.forward();
-		Delay.msDelay(1500);
-		moteurPince.stop();
-		pincesOuvertes = true;
+	public void ouvrirPinces(boolean nonBloquante) {
+		/*
+		 * Si on appelle ouvrirPinces() alors que les pinces sont en train de se fermer.
+		 * On attend qu'elles soient intégralement fermées pour les réouvrir pour s'assurer
+		 * que l'on ouvre toujours les pinces d'autant qu'on les ferme. (un décalage pourrait
+		 * casser le mécanisme).
+		 * On a aucun problème à bloquer le thread principal dans une boucle vu que si une action
+		 * de fermeture des pinces se fait à ce moment précis (le cas où moteurPince.isMoving() est évalué
+		 * à 'true') c'est que cette action se fait dans le thread secondaire.
+		 */
+		while(moteurPince.isMoving()) {
+			Delay.msDelay(Agent.MS_DELAY);
+		}
+		if (nonBloquante) {
+			requireOuvrirPinces = true;
+		}else {
+			moteurPince.forward();
+			Delay.msDelay(1500);
+			moteurPince.stop();
+			pincesOuvertes = true;
+		}
 	}
 	/**
 	 * Ferme les pinces du robot, et met à jour l'attribut <code>pincesOuvertes</code>.
-	 * Méthode bloquante.
+	 * Méthode bloquante si le paramètre est 'false'.
+	 * @param nonBloquante
 	 */
-	public void fermerPinces() {
-		if (!pincesOuvertes) return;
-		moteurPince.backward();
-		Delay.msDelay(1500);
-		moteurPince.stop();
-		pincesOuvertes = false;
+	public void fermerPinces(boolean nonBloquante) {
+		/*
+		 * Si on appelle fermerPinces() alors que les pinces sont en train de s'ouvrir.
+		 * On attend qu'elles soient intégralement ouvertes pour les fermer, pour s'assurer
+		 * que l'on ferme toujours les pinces d'autant qu'on les ouvre. (un décalage pourrait
+		 * casser le mécanisme).
+		 * On a aucun problème à bloquer le thread principal dans une boucle vu que si une action
+		 * d'ouverture des pinces se fait à ce moment précis (le cas où moteurPince.isMoving() est évalué
+		 * à 'true') c'est que cette action se fait dans le thread secondaire.
+		 */
+		while(moteurPince.isMoving()) {
+			Delay.msDelay(Agent.MS_DELAY);
+		}
+		if (nonBloquante) {
+			requireFermerPinces = true;
+		}else {
+			moteurPince.backward();
+			Delay.msDelay(1500);
+			moteurPince.stop();
+		}
 	}
 	/**
 	 * Incrémente la direction actuelle du robot de l'angle en paramètre. On souhaite toujours
@@ -155,5 +197,31 @@ public class Actionneur {
 	 */
 	public int getDirection() {
 		return direction;
+	}
+	class PincesThread extends Thread  {
+		@SuppressWarnings("static-access")
+		@Override
+		public void run() {
+			while(true) {
+				try {
+					if(requireOuvrirPinces) {
+						moteurPince.forward();
+						this.sleep(1500);
+						moteurPince.stop();
+						pincesOuvertes = true;
+						requireOuvrirPinces = false;
+					}
+					if(requireFermerPinces) {
+						moteurPince.backward();
+						this.sleep(1500);
+						moteurPince.stop();
+						pincesOuvertes = false;
+						requireFermerPinces = false;
+					}
+					this.sleep(Agent.MS_DELAY);
+				}
+				catch (InterruptedException e) {}
+			}
+		}
 	}
 }
