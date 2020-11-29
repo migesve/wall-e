@@ -35,7 +35,19 @@ public class Perception {
 	/**
 	 * Les couleurs principales que le robot doit être capable de discriminer.
 	 */
-	public final static String[]COLORS = {"blue","red","green","yellow","black","white"};
+	public final static String[]COLORS = {"blue","red","green","grey","yellow","black","white"};
+	/**
+	 * Indique si le string en paramètre est une couleur du plateau ou non.
+	 * @param c Un string censé représenté une couleur parmi la liste ci-dessus.
+	 * @return true si c est contenue dans le tableau des couleurs principales, false sinon.
+	 */
+	public static boolean isAColor(String c) {
+		if (c == null) throw new NullPointerException("String color is null");
+		for (String ch : COLORS) {
+			if (ch.equals(c)) return true;
+		}
+		return false;
+	}
 	/**
 	 * Liste des sample des couleurs définies juste au-dessus.
 	 */
@@ -178,7 +190,7 @@ public class Perception {
 	 * Renvoie la distance perçue par le capteur à ultra-son en centimètres.
 	 * @return la distance perçue en cm.
 	 */
-	public float getDistance() {		
+	public float getDistance() {
 		distanceProvider.fetchSample(distanceSample, 0);
 		float dist = 100*distanceSample[0];
 		if (Float.isNaN(dist)) { //NaN = Not A Number
