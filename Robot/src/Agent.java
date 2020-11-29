@@ -34,7 +34,7 @@ public class Agent {
 	 * @param speed Vitesse à laquelle le robot va s'avancer pinces ouvertes. Après tests, si vitesse > 300 le palet rebondit sur le balancier.
 	 * @return Retourne true ou false selon que l'on a réussi à récupérer un palet ou non.
 	 */
-	public boolean prendrePalet(int tryDistance, int speed) {
+	public boolean prendrePalet(double tryDistance, int speed) {
 		if (!action.pincesOuvertes()) { //Si les pinces sont fermées ...
 			action.ouvrirPinces(true); //...on les ouvre !
 		}
@@ -117,38 +117,45 @@ public class Agent {
 	/**
 	 * "Scanne" les alentours sur 360° puis se pointe vers l'objet qui était
 	 * le plus proche.
-	 * @return true à la fin de l'opération.
+	 * @return la plus petite distance.
 	 */
-	public boolean directionNearestObject() {
+	public float directionNearestObject() {
 		float minDist = 300;
 		float minDistAngle = 0;
-		action.rotation(360,60,true); //on scanne sur 360° à une vitesse retenue.
+		action.rotation(360,50,true); //on scanne sur 360° à une vitesse retenue.
 		while(action.isMoving()) {
-			if (perception.distance <= minDist) { 
+			if (perception.distance < minDist - 1) {
 				minDist = perception.distance; //minDist prend toujours la valeur de la plus petite distance perçue.
 				minDistAngle = action.getMouvement().getAngleTurned();//pour cette valeur de minDist, on regarde à quel angle on se trouve.
+				
 			}
+			Delay.msDelay(100);
 		}
 		//Dès qu'on sort de la boucle, on a notre attribut minDistAngle qui représente
 		//l'angle de l'objet le plus proche de nous.
-		Delay.msDelay(200);
 		//Si cet angle est supérieur à 180°, alors il sera préférable de tourner négativement :)
 		if (minDistAngle > 180) {
 			minDistAngle = - (minDistAngle % 180);
 		}
-		action.rotation(minDistAngle,160,false); //on se dirige vers cet objet avec une vitesse plus soutenue, méthode blocante of course. 
-		return true;
+		
+		System.out.println(minDist);
+		System.out.println(minDistAngle);
+		
+		//on se tourne vers là où la distance était la plus petite avec une vitesse plus soutenue, méthode blocante of course.
+		action.rotation(minDistAngle,160,false);
+		
+		return minDist;
 	}
 	/**
 	 * Le robot avance jusqu'à ce qu'il détecte la couleur en paramètre.
 	 * @param c Le String de la couleur.
+	 * @param trydistance La distance d'essai pour aller jusqu'à la ligne de couleur en paramètre.
 	 * @param speed La vitesse à laquelle le robot va avancer.
 	 * @return true si le robot s'est arreté car il a perçu la ligne, 
-	 * false s'il a du s'arrêter au bout d'une distance d'essai initialisée localement à 2000 mm.
+	 * false s'il a du s'arrêter au bout d'une distance d'essai en paramètre.
 	 */
-	public boolean avancerJusquaColor(String c, int speed) {
+	public boolean avancerJusquaColor(String c, double tryDistance, double speed) {
 		if (!Perception.isAColor(c)) return false; //throw une exception ?
-		int tryDistance = 2000;
 		action.avancer(tryDistance, speed, true);
 		while(!perception.color.equals(c)) {
 			Delay.msDelay(MS_DELAY);
