@@ -23,6 +23,11 @@ import lejos.utility.Delay;
  * @author Nous <3
  */
 public class Actionneur {
+	/**
+	 * Le <code>Thread</code> qui fait ouvrir et fermer les pinces lorsqu'on appelle les
+	 * méthodes ouvrirPinces ou fermerPinces de manière non bloquante (pour ne pas bloquer
+	 * le <code>Thread</code> principal).
+	 */
 	private PincesThread pincesThread;
 	/**
 	 * Indique si on désire ouvrir les pinces sans bloquer le thread principal.
@@ -57,7 +62,7 @@ public class Actionneur {
 		Wheel wheel2 = WheeledChassis.modelWheel(moteurDroit,  56).offset( 59.9);
 		Chassis chassis = new WheeledChassis(new Wheel[] { wheel1, wheel2 }, WheeledChassis.TYPE_DIFFERENTIAL);
 		mp = new MovePilot(chassis);
-		moteurPince.setSpeed(1000); //Vitesse d'ouverture/fermeture des pinces reste inchangée.
+		moteurPince.setSpeed(1500); //Vitesse d'ouverture/fermeture des pinces reste inchangée.
 		pincesThread = new PincesThread();
 		pincesThread.start();
 	}
@@ -102,9 +107,9 @@ public class Actionneur {
 	 * @param radius Le rayon du cercle autour duquel le robot va se déplacer.
 	 * @param distance La distance à parcourir le long de  ce cercle.
 	 */
-	public void travelArc(double radius, double distance) {
+	public void travelArc(double radius, double distance, boolean nonBloquante) {
 		//On dirait que le rayon de l'arc sur lequel on tourne * 0.1 + 2300 fait un tour complet .... NO IDEA BRO
-		mp.travelArc(radius,distance);
+		mp.travelArc(radius,distance,nonBloquante);
 	}
 	/**
 	 * Stoppe le robot.
@@ -130,11 +135,12 @@ public class Actionneur {
 		while(moteurPince.isMoving()) {
 			Delay.msDelay(Agent.MS_DELAY);
 		}
+		if (pincesOuvertes) return;
 		if (nonBloquante) {
 			requireOuvrirPinces = true;
 		}else {
 			moteurPince.forward();
-			Delay.msDelay(1500);
+			Delay.msDelay(1000);
 			moteurPince.stop();
 			pincesOuvertes = true;
 		}
@@ -157,12 +163,14 @@ public class Actionneur {
 		while(moteurPince.isMoving()) {
 			Delay.msDelay(Agent.MS_DELAY);
 		}
+		if (!pincesOuvertes) return;
 		if (nonBloquante) {
 			requireFermerPinces = true;
 		}else {
 			moteurPince.backward();
-			Delay.msDelay(1500);
+			Delay.msDelay(1000);
 			moteurPince.stop();
+			pincesOuvertes = false;
 		}
 	}
 	/**
@@ -185,14 +193,23 @@ public class Actionneur {
 		return mp.isMoving();
 	}
 	/**
-	 * Accesseur public à l'attribut <code>pincesOuvertes</code>.
+	 * Getter public à l'attribut <code>pincesOuvertes</code>.
 	 * @return l'état des pinces.
 	 */
 	public boolean pincesOuvertes() {
 		return pincesOuvertes;
 	}
 	/**
-	 * Accesseur public à l'attribut <code>direction</code>.
+	 * Setter public à l'attribut <code>direction</code>.
+	 * On ne redéfinit cet attribut que si le robot s'est perdu, après appel
+	 * à une méthode qui consiste à recadrer le robot face à un mur.
+	 * @param direction La direction que le robot croit être.
+	 */
+	public void setDirection(int direction) {
+		this.direction = direction;
+	}
+	/**
+	 * Getter public à l'attribut <code>direction</code>.
 	 * @return la direction actuelle du robot.
 	 */
 	public int getDirection() {
@@ -206,14 +223,14 @@ public class Actionneur {
 				try {
 					if(requireOuvrirPinces) {
 						moteurPince.forward();
-						this.sleep(1500);
+						this.sleep(1000);
 						moteurPince.stop();
 						pincesOuvertes = true;
 						requireOuvrirPinces = false;
 					}
 					if(requireFermerPinces) {
 						moteurPince.backward();
-						this.sleep(1500);
+						this.sleep(1000);
 						moteurPince.stop();
 						pincesOuvertes = false;
 						requireFermerPinces = false;
