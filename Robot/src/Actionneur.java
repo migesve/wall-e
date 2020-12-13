@@ -26,7 +26,9 @@ public class Actionneur {
 	/**
 	 * Le <code>Thread</code> qui fait ouvrir et fermer les pinces lorsqu'on appelle les
 	 * méthodes ouvrirPinces ou fermerPinces de manière non bloquante (pour ne pas bloquer
-	 * le <code>Thread</code> principal).
+	 * le <code>Thread</code> principal). Il est important de préciser que les méthodes
+	 * bloquantes/non bloquantes ne fonctionnent qu'avec la classe chassis et pas la classe
+	 * <code>EV3MediumRegulatedMotor</code> pour le moteur de la pince directement !
 	 */
 	private PincesThread pincesThread;
 	/**
@@ -55,22 +57,32 @@ public class Actionneur {
 	private int direction;
 
 	public Actionneur(Port portA, Port portB, Port portC) {
+		/*
+		 * On instancie les 3 moteurs.
+		 */
 		EV3LargeRegulatedMotor moteurGauche = new EV3LargeRegulatedMotor(portA);
 		EV3LargeRegulatedMotor moteurDroit = new EV3LargeRegulatedMotor(portC);
 		moteurPince = new EV3MediumRegulatedMotor(portB);
-		Wheel wheel1 = WheeledChassis.modelWheel(moteurGauche, 56).offset(-59.9); //unité = mm. L'offset est le décalage de la roue par rapport au centre de l'essieu.
+		/*
+		 * unité = mm. L'offset est le décalage de la roue par rapport au centre de l'essieu.
+		 * Pour déterminer l'offset : on fait tourner 10 fois le robot sur lui-même et on regarde 
+		 * le décalage par rapport à 0°.
+		 */
+		Wheel wheel1 = WheeledChassis.modelWheel(moteurGauche, 56).offset(-59.9);
 		Wheel wheel2 = WheeledChassis.modelWheel(moteurDroit,  56).offset( 59.9);
 		Chassis chassis = new WheeledChassis(new Wheel[] { wheel1, wheel2 }, WheeledChassis.TYPE_DIFFERENTIAL);
 		mp = new MovePilot(chassis);
-		moteurPince.setSpeed(1500); //Vitesse d'ouverture/fermeture des pinces reste inchangée.
+		/*
+		 * Vitesse d'ouverture/fermeture des pinces reste inchangée.
+		 */
+		moteurPince.setSpeed(1500); 
 		pincesThread = new PincesThread();
 		pincesThread.start();
 	}
-	public void update() {
-		
-	}
 	/**
-	 * Permet de récupérer le mouvement en cours.
+	 * Permet de récupérer le mouvement en cours. On utilisera cette méthode pour récupérer
+	 * par exemple pendant un mouvement de combien est-ce qu'on a avancé ou de combien est-ce
+	 * qu'on a tourné.
 	 * @return un mouvement de type Move.
 	 */
 	public Move getMouvement() {
@@ -97,7 +109,10 @@ public class Actionneur {
 		mp.setAngularAcceleration(speed);
 		mp.setAngularSpeed(speed);
 		mp.rotate(angle,nonBloquante);
-		updateDirection(angle); //met à jour l'attribut de direction.
+		/*
+		 * On met à jour l'attribut de direction en incrémentant l'angle dont le robot va tourner.
+		 */
+		updateDirection(angle);
 	}
 	/**
 	 * Déplace le robot sur le long du cercle spécifié par son rayon.
@@ -108,7 +123,6 @@ public class Actionneur {
 	 * @param distance La distance à parcourir le long de  ce cercle.
 	 */
 	public void travelArc(double radius, double distance, boolean nonBloquante) {
-		//On dirait que le rayon de l'arc sur lequel on tourne * 0.1 + 2300 fait un tour complet .... NO IDEA BRO
 		mp.travelArc(radius,distance,nonBloquante);
 	}
 	/**
@@ -119,22 +133,26 @@ public class Actionneur {
 	}
 	/**
 	 * Ouvre les pinces du robot, et met à jour l'attribut <code>pincesOuvertes</code>.
-	 * Méthode bloquante si le paramètre est 'false'.
-	 * @param nonBloquante
+	 * Méthode bloquante si le paramètre est 'false'. Si on appelle ouvrirPinces() alors que 
+	 * les pinces sont en train de se fermer. On attend qu'elles soient intégralement fermées 
+	 * pour les réouvrir pour s'assurer que l'on ouvre toujours les pinces d'autant qu'on les 
+	 * ferme. (un décalage pourrait casser le mécanisme). On a aucun problème à bloquer le thread 
+	 * principal dans une boucle vu que si une action de fermeture des pinces se fait à ce moment 
+	 * précis (le cas où moteurPince.isMoving() est évalué à 'true') c'est que cette action se fait 
+	 * dans le thread secondaire.
+	 * @param nonBloquante Si la méthode ouvrirPinces est bloquante ou non.
 	 */
 	public void ouvrirPinces(boolean nonBloquante) {
 		/*
-		 * Si on appelle ouvrirPinces() alors que les pinces sont en train de se fermer.
-		 * On attend qu'elles soient intégralement fermées pour les réouvrir pour s'assurer
-		 * que l'on ouvre toujours les pinces d'autant qu'on les ferme. (un décalage pourrait
-		 * casser le mécanisme).
-		 * On a aucun problème à bloquer le thread principal dans une boucle vu que si une action
-		 * de fermeture des pinces se fait à ce moment précis (le cas où moteurPince.isMoving() est évalué
-		 * à 'true') c'est que cette action se fait dans le thread secondaire.
+		 * Si les pinces bougent, on attend la fin du mouvement.
 		 */
 		while(moteurPince.isMoving()) {
 			Delay.msDelay(Agent.MS_DELAY);
 		}
+		/*
+		 * Si les pinces sont déjà ouvertes, on ne fait rien et la méthode retourne
+		 * immédiatement.
+		 */
 		if (pincesOuvertes) return;
 		if (nonBloquante) {
 			requireOuvrirPinces = true;
@@ -147,22 +165,26 @@ public class Actionneur {
 	}
 	/**
 	 * Ferme les pinces du robot, et met à jour l'attribut <code>pincesOuvertes</code>.
-	 * Méthode bloquante si le paramètre est 'false'.
-	 * @param nonBloquante
+	 * Méthode bloquante si le paramètre est 'false'. Si on appelle fermerPinces() alors 
+	 * que les pinces sont en train de s'ouvrir. On attend qu'elles soient intégralement 
+	 * ouvertes pour les fermer, pour s'assurer que l'on ferme toujours les pinces d'autant 
+	 * qu'on les ouvre. (un décalage pourrait casser le mécanisme). On a aucun problème à bloquer 
+	 * le thread principal dans une boucle vu que si une action d'ouverture des pinces se fait à 
+	 * ce moment précis (le cas où moteurPince.isMoving() est évalué à 'true') c'est que cette 
+	 * action se fait dans le thread secondaire.
+	 * @param nonBloquante Si la méthode fermerPinces est bloquante ou non.
 	 */
 	public void fermerPinces(boolean nonBloquante) {
 		/*
-		 * Si on appelle fermerPinces() alors que les pinces sont en train de s'ouvrir.
-		 * On attend qu'elles soient intégralement ouvertes pour les fermer, pour s'assurer
-		 * que l'on ferme toujours les pinces d'autant qu'on les ouvre. (un décalage pourrait
-		 * casser le mécanisme).
-		 * On a aucun problème à bloquer le thread principal dans une boucle vu que si une action
-		 * d'ouverture des pinces se fait à ce moment précis (le cas où moteurPince.isMoving() est évalué
-		 * à 'true') c'est que cette action se fait dans le thread secondaire.
+		 * Si les pinces bougent, on attend la fin du mouvement.
 		 */
 		while(moteurPince.isMoving()) {
 			Delay.msDelay(Agent.MS_DELAY);
 		}
+		/*
+		 * Si les pinces sont déjà fermées, on ne fait rien et la méthode retourne
+		 * immédiatement.
+		 */
 		if (!pincesOuvertes) return;
 		if (nonBloquante) {
 			requireFermerPinces = true;
@@ -179,8 +201,18 @@ public class Actionneur {
 	 * @param angle L'angle à incrémenter à la direction actuelle.
 	 */
 	public void updateDirection(double angle) {
+		/*
+		 * On incrémente.
+		 */
 		direction += angle;
+		/*
+		 * On rabaisse à [-359;359].
+		 */
 		direction %= 360;
+		/*
+		 * Si négatif on incrémente 360 (on retrouve le même angle mais il est positif).
+		 * Ca ne fait pas tourner le robot ! ça ne fait que mettre à jour un attribut.
+		 */
 		if (direction < 0) {
 			direction += 360;
 		}
@@ -215,17 +247,40 @@ public class Actionneur {
 	public int getDirection() {
 		return direction;
 	}
+	/**
+	 * Thread secondaire. Permet de faire des actions comme ouvrir et fermer les pinces
+	 * sans bloquer le thread principal. Rappelons que pour ouvrir les pinces on est obligé
+	 * de procéder comme suit : on demande au moteur de tourner, on attend un temps t, puis on
+	 * stop le moteur. Sachant la vitesse on contrôle ainsi l'ouverture/fermeture des pinces.
+	 * Or, "attendre" demande de bloquer le thread, en effet quand on appelle Delay.msDelay(long)
+	 * le programme boucle tant que l'intervalle de temps n'est pas écoulé, et donc ne rend pas la
+	 * mains pour demander (par exemple) aux moteurs des roues qui eux ne bougent pas pendant l'ouverture
+	 * des pinces d'avancer !
+	 * @author encore nous <3
+	 */
 	class PincesThread extends Thread  {
 		@SuppressWarnings("static-access")
 		@Override
 		public void run() {
+			/*
+			 * Thread qui fonctionne en parallèle du thread principal à tout moment.
+			 */
 			while(true) {
 				try {
+					/*
+					 * Si on demande d'ouvrir les pinces de manière non bloquante, la méthode
+					 * ouvrirPinces(true) ne fera que mettre l'attribut "requireOuvrirPinces"
+					 * à 'true'. C'est ici qu'on bloquera le thread, et pas le principal.
+					 */
 					if(requireOuvrirPinces) {
 						moteurPince.forward();
 						this.sleep(1000);
 						moteurPince.stop();
 						pincesOuvertes = true;
+						/*
+						 * On indique évidement qu'on a plus besoin d'ouvrir les pinces dans ce thread
+						 * une fois l'opération terminée.
+						 */
 						requireOuvrirPinces = false;
 					}
 					if(requireFermerPinces) {
