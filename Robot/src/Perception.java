@@ -199,17 +199,18 @@ public class Perception {
 			return dist;
 		}
 	}
-
-	//	public boolean getIR() {  //true = il y a qqln 
-	//		//capteurDistance.enable(); //tester avec un autre robot si getIR() marche sans cette ligne
+	/**
+	 * Notre stratégie consiste à ne pas utiliser ce mode du capteur à ultrason :)
+	 * Tout simplement car si nos adversaires entamment déjà une manoeuvre pour nous esquiver,
+	 * alors on aura pas à la faire. C'est tout de même beaucoup de temps de perdu. Notre
+	 * stratégie consiste également à tourner toujours à l'opposé de où est le robot adverse pour éviter
+	 * au plus les collisions.
+	 */
+	//	public boolean getIR() {  //true = il y a qqln
 	//		capteurDistance.setCurrentMode(1);
 	//		irProvider = capteurDistance.getListenMode();
 	//		irSample = new float [irProvider.sampleSize()];
 	//		irProvider.fetchSample(irSample, 0);
 	//		return irSample[0]==1 ? true : false;
-	//
-	//		/*test
-	//		System.out.println(irSample[0]);
-	//		Delay.msDelay(10000);*/
 	//	}
 }
