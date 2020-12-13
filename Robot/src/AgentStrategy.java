@@ -1,9 +1,20 @@
 import lejos.hardware.Button;
-
+/**
+ * Classe qui ordonne les méthodes d'Agent, nos stratégies.
+ * @author nous <3
+ */
 public class AgentStrategy extends Agent {
-	
+	/**
+	 * Constance pour la ligne rouge.
+	 */
 	public static final int LIGNE_RED = -1;
+	/**
+	 * Constance pour la ligne noire.
+	 */
 	public static final int LIGNE_BLACK = 0;
+	/**
+	 * Constance pour la ligne bleue.
+	 */
 	public static final int LIGNE_YELLOW = 1;
 	public boolean right;
 	int posOtherRobot;
@@ -18,7 +29,9 @@ public class AgentStrategy extends Agent {
 		}
 	}
 	/**
-	 * 
+	 * Stratégie codée en dur pour les 3 premiers palets si on commence ligne rouge.
+	 * Vu la variabilité des moteurs, elle risque de passer toute seule en IA juste après
+	 * avoir marqué le 1er palet.
 	 */
 	public void strategyRed() {
 		if (!prendrePalet(600,200)) staticEchoue();
@@ -47,11 +60,13 @@ public class AgentStrategy extends Agent {
 		strategyAI();
 	}
 	/**
-	 * 
+	 * Stratégie codée en dur pour les 3 premiers palets si on commence ligne noire.
+	 * Vu la variabilité des moteurs, elle risque de passer toute seule en IA juste après
+	 * avoir marqué le 1er palet.
 	 */
 	public void strategyMid() {
 		
-		int beginDroite = (posOtherRobot == LIGNE_YELLOW && right) || (posOtherRobot == LIGNE_RED && !right) ? -1 : 1;
+		int beginDroite = (posOtherRobot == LIGNE_YELLOW && right) || (posOtherRobot == LIGNE_RED && !right) ? 1 : -1;
 		//beginDroite vaut -1 si on commence à tourner à droite, on oublie pas 
 		//que les angles positifs tournent vers la gauche (sens trigo), donc 
 		//si on doit commencer à droite, beginDroite vaut -1.
@@ -80,6 +95,9 @@ public class AgentStrategy extends Agent {
 		getAction().avancer(-1000,300,false);
 		strategyAI();
 	}
+	/**
+	 * La stratégie IA qui permet au robot de récupérer des palets à l'aide de ses capteurs uniquement
+	 */
 	public void strategyAI() {
 		//on essaie de marquer 4 autres palets en mode "IA"
 		for (int i = 0; i < 4; i++) {
@@ -93,12 +111,17 @@ public class AgentStrategy extends Agent {
 				}
 				
 				float minDist = directionNearestObject();
-
-				if (minDist < 26) {
+				/*
+				 * Si distance minimum est inf à 30, c'est que on a vu un mur. On recule donc.
+				 */
+				if (minDist < 30) {
 					getAction().avancer(-200, 300, false); //on recule un peu
-					continue; //Si la distance est inférieure à 26 (faut que ce soit un palet) on refait car ça a pas marché.
+					continue; //Si la distance est inférieure à 30 (faut que ce soit un palet) on refait car ça a pas marché.
 				}
-				
+				/*
+				 * Si ça réussit on tente de prendre le palet sur la distance min perçue + une distance de 100mm de sécurité.
+				 * On onblie pas que la dist perçue par le capteur à US est en cm, donc *10 pour avoir en mm.
+				 */
 				boolean essaiPalet = prendrePalet(minDist*10 + 100,200);
 				if (essaiPalet) break; 
 			}
@@ -112,7 +135,7 @@ public class AgentStrategy extends Agent {
 			//Pour cela on le fait reculer jusqu'à la ligne noire verticale puis on tourne de 90 et on regarde la distance
 			getAction().fermerPinces(true);
 			boolean b = avancerJusquaColor("black",-1500,350);
-//			if (!b) perdu();
+			if (!b) perdu();
 			getAction().rotation(90, 300, false);
 			float distance = getPerception().distance;
 			//on avance de distance - 1000, car si distance affiche 80 cm c'est qu'on est à 800 mm du bord, hors la hauteur 
@@ -125,48 +148,71 @@ public class AgentStrategy extends Agent {
 			
 	}
 	/**
-	 * 
+	 * Méthode appelée si la première partie codée en "dur" échoue. Elle permet au robot de
+	 * se resituer au centre du plateau pour passer en stratégie IA.
 	 */
 	public void staticEchoue() {
 		getAction().fermerPinces(true);
+		/*
+		 * Retourne très vite à la ligne blanche de NOTRE equipe.
+		 */
 		avancerJusquaColor("white",-2000,350);
+		/*
+		 * une fois sur la ligne, se tourne vers l'objet le plus proche (donc le mur si distance inférieure à 32).
+		 */
 		float f = directionNearestObject();
-		if (f < 35) {
+		if (f < 32) {
+			/*
+			 * Redéfinit notre attribut de direction à 180.
+			 */
 			getAction().setDirection(180);
 		}
+		/**
+		 * Tourne de 180 puis va à la ligne noire.
+		 */
 		getAction().rotation(180, 300, false);
-		getAction().avancer(1200, 300, false);
+		avancerJusquaColor("black",2000,350);
+		/**
+		 * Passe en stratégie IA.
+		 */
 		strategyAI();
 	}
 	/**
 	 * Si au cours de la stratégie le robot est perdu, on appelle cette méthode.
 	 * La méthode tente de recalibrer un angle de 0 face au but adverse et de
-	 * ramener le robot au centre du plateau.
-	 * @param angle Paramètre d'angle mis à true si on connait l'angle du robot ou s'il est incertain
-	 * (dans le cas où on le connait on pourra faire appel aux méthodes de direction par exemple)
-	 * @param position Paramètre de position mis à true si on connait la position du robot, il s'agira 
-	 * alors de diriger le robot vers le bon angle.
-	 * Si les deux paramètres sont à true c'est que tout va bien et donc la méthode retourne. De manière générale
-	 * c'est nous qui appelons cette méthode dans la stratégie lorsqu'une des méthodes d' "IA" échouent de manière
-	 * répétée, donc si on met les deux paramètres à true c'est qu'on est bizarre :)
+	 * ramener le robot au centre du plateau puis de repartir en mode IA.
 	 */
 	public void perdu() {
 		getAction().fermerPinces(true);
+		/*
+		 * On essaie de retrouver une ligne noire
+		 */
 		boolean b = avancerJusquaColor("black",-1500,350);
 		if (!b) avancerJusquaColor("black",1500,350);
+		/*
+		 * On tourne de 90° et on se positionne au milieu de l'autre ligne noire mais
+		 * avec le capteur à US cette fois.
+		 */
 		getAction().rotation(90, 300, false);
 		float distance = getPerception().distance;
-		getAction().avancer(distance*10 - 1000, 100, false); 
+		getAction().avancer(distance*10 - 1000, 100, false);
+		/*
+		 * On reprend notre stratégie.
+		 */
 		strategyAI();
 	}
 	/**
-	 * 
+	 * Message au début juste après avoir lancé le programme.
+	 * L'interface demande d'abord de quel côté on part, puis sur quelle ligne commence
+	 * l'adversaire pour déterminer de quel côté le robot va faire ses rotations.
+	 * Ensuite l'interface propose un "récapitulatif" que nous devons valider.
+	 * Enfin, l'interface inique si le robot est pret, et que le code commencer à s'éxecuter dès l'appui sur une touche.
 	 */
 	public void messageDebut() {
 		System.out.println("Cote de depart ?");
 		System.out.println("rappel :");
-		System.out.println("droite = ligne   bleue");
-		System.out.println("gauche = ligne   vert");
+		System.out.println("gauche = ligne   bleue");
+		System.out.println("droite = ligne   vert");
 		int id = Button.waitForAnyPress();
 		switch (id) {
 		case Button.ID_LEFT : right = false; break;
