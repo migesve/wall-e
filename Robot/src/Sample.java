@@ -5,6 +5,11 @@ import lejos.robotics.filter.MeanFilter;
  * Un Sample utilise un MeanFilter pour moyenner le Sample perçu avec N précédents. On définit un
  * nom pour un sample, c'est important (pour les couleurs principales) d'avoir un nom type String 
  * pour pouvoir les différencier ou les comparer entre eux facilement ensuite.
+ * 
+ * <b> Dépendance : les méthodes de cette classe sont utilisées dans <code>Calibreur</code> pour
+ * générer les <code>Sample</code> des couleurs de base, et dans <code>Perception</code> pour
+ * générer les sample de la couleur perçue par le capteur de couleur. </b>
+ * 
  * @author nous <3
  */
 public class Sample {
