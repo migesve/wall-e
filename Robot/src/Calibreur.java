@@ -81,12 +81,12 @@ public class Calibreur {
 			 * On écrit dans le fichier les 3 valeurs séparées par un "/".
 			 */
 			writer.write(f[0]+"/"+f[1]+"/"+f[2]);
-			if (i < sampleList.size() - 1) writer.newLine(); //condition pour ne pas faire une nouvelle ligne après la dernière ligne de valeurs.
+			if (i < Perception.COLORS.length - 1) writer.newLine(); //condition pour ne pas faire une nouvelle ligne après la dernière ligne de valeurs.
 		}
 		writer.close();
 		g.clear();
 //		--- CODE DE TEST POUR LE CALIBREUR ---
-//		//Permet de tester quelques couleur après l'opération de calibrage pour
+//		//Permet de tester quelques couleurs après l'opération de calibrage pour
 //		//savoir si celui-ci a été fait correctement.
 //		while (true) {
 //			System.out.println("\n\n\n\n\n");
