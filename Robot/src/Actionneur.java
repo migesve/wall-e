@@ -20,6 +20,9 @@ import lejos.utility.Delay;
  * <li>la "linear speed" qui définit la vitesse du robot dans les méthodes de déplacements avant/arrière
  * <li>la "linear acceleration" qui définit la qualité des phases d'accélération en début de mouvement
  * et de décélération en fin de mouvement pour une vitesse moteur spécifiée.
+ * 
+ * <b> Dépendance : les méthodes de cette classe sont utilisées dans <code>Agent</code> uniquement. </b>
+ * 
  * @author Nous <3
  */
 public class Actionneur {
