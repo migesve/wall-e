@@ -1,6 +1,9 @@
 import lejos.hardware.Button;
 /**
  * Classe qui ordonne les méthodes d'Agent, nos stratégies.
+ * 
+ * <b> Dépendance : les méthodes de cette classe sont utilisées dans <code>Agent</code> uniquement. </b>
+ * 
  * @author nous <3
  */
 public class AgentStrategy extends Agent {
