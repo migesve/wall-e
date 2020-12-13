@@ -16,6 +16,9 @@ import lejos.utility.Delay;
  * selon que le balancier appuie dessus ou non. Le capteur de couleur qui détermine quelle couleur
  * parmi une liste de couleurs définies est la plus proche de celle que le capteur perçoit ; on utilise
  * pour cela la méthode des scalaires précisée plus bas. Le capteur à ultra-son qui renvoie une distance.
+ * 
+ * <b> Dépendance : les méthodes de cette classe sont utilisées dans <code>Agent</code> uniquement. </b>
+ * 
  * @author nous <3
  */
 public class Perception {
