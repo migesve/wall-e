@@ -4,10 +4,26 @@ import lejos.utility.Delay;
 import lejos.utility.Timer;
 import lejos.utility.TimerListener;
 
+/**
+ * Classe qui contient toutes les méthodes de haut niveau pour notre robot.
+ * @author nous <3
+ */
 public class Agent {
+	/*
+	 * On update toutes les 20 ms.
+	 */
 	public static final int MS_DELAY = 20;
+	/**
+	 * Les actions du robot.
+	 */
 	private Actionneur action;
+	/**
+	 * Les perceptions du robot.
+	 */
 	private Perception perception;
+	/**
+	 * Timer qui permet d'itérer pour mettre à jour les données des capteurs.
+	 */
 	private Timer timer;
 	public Actionneur getAction() {
 		return action;
@@ -30,14 +46,14 @@ public class Agent {
 	}
 	/**
 	 * Dès qu'on pense avoir détécté un palet, on appelle cette méthode pour le récupérer.
+	 * Si les pinces sont fermées elles s'ouvrent en même temps que le robot va avancer pour
+	 * récup le palet.
 	 * @param tryDistance Distance sur laquelle le robot va essayer d'avancer.
 	 * @param speed Vitesse à laquelle le robot va s'avancer pinces ouvertes. Après tests, si vitesse > 300 le palet rebondit sur le balancier.
 	 * @return Retourne true ou false selon que l'on a réussi à récupérer un palet ou non.
 	 */
 	public boolean prendrePalet(double tryDistance, int speed) {
-		if (!action.pincesOuvertes()) { //Si les pinces sont fermées ...
-			action.ouvrirPinces(true); //...on les ouvre !
-		}
+		action.ouvrirPinces(true); //...on ouvre les pinces de manière non bloquante !
 		//On fait avancer le robot sur cette distance, avec un retour immédiat.
 		action.avancer(tryDistance,speed,true);
 		//Tant que le capteur tactile renvoie false ...
@@ -48,6 +64,13 @@ public class Agent {
 			//s'est arrêté) c'est qu'il n'a pas trouvé de palet, on return false.
 			if(!action.isMoving()) {
 				action.fermerPinces(false);
+				return false;
+			}
+			//Si on aperçoit un objet très proche (donc trop proche pour que ce soit un palet)
+			//on recule en fermant les pinces de la distance que l'on a avancé.
+			if (perception.distance < 10) {
+				action.fermerPinces(true);
+				action.avancer(-action.getMouvement().getDistanceTraveled(), 200, false);
 				return false;
 			}
 		}
@@ -81,7 +104,8 @@ public class Agent {
 		}
 	}
 	/**
-	 * Tourne vers le mur ; s'arrête dès que la distance augmente.
+	 * Tourne vers le mur ; s'arrête dès que la distance augmente. Permet de se remettre perpendiculaire
+	 * au mur.
 	 * @return true à la fin de l'opération.
 	 */
 	public boolean perpendiculaire() {
@@ -105,7 +129,11 @@ public class Agent {
 	 * @return true à la fin de l'opération.
 	 */
 	public boolean resetDirection() {
-		int angle = action.getDirection(); //on récupère l'opposé de la direction actuelle.
+		int angle = action.getDirection(); //on récupère la direction actuelle.
+		/*
+		 * On tourne donc de l'opposé de cet angle.
+		 * Si l'angle opposé est sup à 180, on tournera négativement (plus rapide).
+		 */
 		if (angle > 180) {
 			angle = 360 - angle;
 		}else if(angle < 180) {
@@ -115,19 +143,18 @@ public class Agent {
 		return true;
 	}
 	/**
-	 * "Scanne" les alentours sur 360° puis se pointe vers l'objet qui était
-	 * le plus proche.
-	 * @return la plus petite distance.
+	 * "Scanne" les alentours sur 360° lentement pour obtenir le plus de valeurs possibles
+	 * puis se pointe vers l'objet qui était le plus proche.
+	 * @return la plus petite distance en cm.
 	 */
 	public float directionNearestObject() {
 		float minDist = 300;
 		float minDistAngle = 0;
 		action.rotation(360,50,true); //on scanne sur 360° à une vitesse retenue.
 		while(action.isMoving()) {
-			if (perception.distance < minDist - 1) {
+			if (perception.distance < minDist) {
 				minDist = perception.distance; //minDist prend toujours la valeur de la plus petite distance perçue.
 				minDistAngle = action.getMouvement().getAngleTurned();//pour cette valeur de minDist, on regarde à quel angle on se trouve.
-				
 			}
 			Delay.msDelay(100);
 		}
@@ -136,11 +163,7 @@ public class Agent {
 		//Si cet angle est supérieur à 180°, alors il sera préférable de tourner négativement :)
 		if (minDistAngle > 180) {
 			minDistAngle = - (minDistAngle % 180);
-		}
-		
-		System.out.println(minDist);
-		System.out.println(minDistAngle);
-		
+		}		
 		//on se tourne vers là où la distance était la plus petite avec une vitesse plus soutenue, méthode blocante of course.
 		action.rotation(minDistAngle,160,false);
 		
@@ -167,18 +190,26 @@ public class Agent {
 		return true;
 	}
 	/**
-	 * Le robot ne fait qu'avancer tant qu'il suit la couleur passée en paramètre.
+	 * Le robot ne fait qu'avancer tant qu'il suit la couleur passée en paramètre sur une
+	 * distance donnée. Il "tâtonne" à gauche et/ou droite pour retrouver la ligne dès qu'il l'a perdue.
 	 * @param color La couleur à suivre.
+	 * @return true dès que la distance a été parcourue.
 	 */
-	public boolean suivreColor(String c) {
-		if (!Perception.isAColor(c)) return false; //should we throw an exception ?
+	public boolean suivreColor(String c, int distance) {
+		if (!Perception.isAColor(c)) return false; //throw une exception ?
+		int dist = 0;
 		boolean positif = true;
 		while(true) {
-			if (Button.ESCAPE.isDown()) {
-				System.exit(0);
-			}
+//			if (Button.ESCAPE.isDown()) {
+//				System.exit(0);
+//			}
 			action.avancer(3000, 80, true);
 			while(perception.color.equals(c)) {
+				dist += action.getMouvement().getDistanceTraveled();
+				if (dist >= distance) {
+					action.stop();
+					return true;
+				}
 				Delay.msDelay(MS_DELAY);
 			}
 			action.stop();
@@ -194,13 +225,12 @@ public class Agent {
 	 * Un Timer utilise un thread secondaire pour faire un appel itératif de la méthode
 	 * timedOut de l'interface TimerListener. On utilise cette itération pour mettre à jour
 	 * nos attributs de perception.
-	 * @author moi <3
+	 * @author que moi <3
 	 *
 	 */
 	class Boucle implements TimerListener {
 		@Override
 		public void timedOut() {
-			action.update();
 			perception.update();
 		}
 	}
