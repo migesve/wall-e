@@ -8,17 +8,25 @@ import lejos.robotics.filter.MeanFilter;
  * @author nous <3
  */
 public class Sample {
+	/**
+	 * Notre provider.
+	 */
 	private MeanFilter average;
+	/**
+	 * Le nom attribué à la couleur.
+	 */
 	private final String colorName;
+	/**
+	 * Notre vecteur.
+	 */
 	private float[] sample;
 	
 	public Sample(MeanFilter average, String name) {
-		this.average = average;
-		colorName = name;
-		sample = new float[average.sampleSize()];
+		this(average,name, new float[average.sampleSize()]);
 	}
 	public Sample(MeanFilter average, String name, float[] sample) {
-		this(average,name);
+		this.average = average;
+		colorName = name;
 		this.sample = sample;
 	}
 	/**
@@ -28,7 +36,7 @@ public class Sample {
 	 * Puis ensuite on détecte la couleur.
 	 */
 	public void calibrateColor() {
-		System.out.println("ENTER pour");
+		System.out.println("ENTRER pour");
 		System.out.println("detecter "+colorName+"..");
 		Button.ENTER.waitForPress();
 		detectColor();
