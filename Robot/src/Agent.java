@@ -6,6 +6,9 @@ import lejos.utility.TimerListener;
 
 /**
  * Classe qui contient toutes les méthodes de haut niveau pour notre robot.
+ * 
+ * <b> Dépendance : les méthodes de cette classe sont utilisées dans <code>AgentStrategy</code> uniquement. </b>
+ * 
  * @author nous <3
  */
 public class Agent {
