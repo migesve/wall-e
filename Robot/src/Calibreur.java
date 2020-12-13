@@ -24,6 +24,10 @@ import lejos.robotics.filter.MeanFilter;
  * actuellement perçue comme étant celle qui est la "plus proche" d'une des couleurs de la liste. Pour cela
  * on calcule le scalaire entre la couleur perçue et chacune des couleurs de la liste, et on dit que la couleur
  * renvoyée est celle pour qui son scalaire était le plus petit avec la couleur perçue.
+ * 
+ * <b> Dépendance : les méthodes de cette classe ne sont utilisées que dans <code>Calibreur</code> hormis 
+ * getNearestSample qui est une méthode statique utilisée dans <code>Perception</code>.</b>
+ * 
  * @author nous <3
  *
  */
