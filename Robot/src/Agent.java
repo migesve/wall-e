@@ -9,7 +9,10 @@ import lejos.utility.TimerListener;
  * 
  * <b> Dépendance : les méthodes de cette classe sont utilisées dans <code>AgentStrategy</code> uniquement. </b>
  * 
- * @author nous <3
+ * @author GATTACIECCA Bastien
+ * @author DESCOTILS Juliette
+ * @author LATIFI Arita
+ * @author mig
  */
 public class Agent {
 	/*
@@ -52,7 +55,7 @@ public class Agent {
 	 * Si les pinces sont fermées elles s'ouvrent en même temps que le robot va avancer pour
 	 * récup le palet.
 	 * @param tryDistance Distance sur laquelle le robot va essayer d'avancer.
-	 * @param speed Vitesse à laquelle le robot va s'avancer pinces ouvertes. Après tests, si vitesse > 300 le palet rebondit sur le balancier.
+	 * @param speed Vitesse à laquelle le robot va s'avancer pinces ouvertes. Après tests, si vitesse supérieure 300 le palet rebondit sur le balancier.
 	 * @return Retourne true ou false selon que l'on a réussi à récupérer un palet ou non.
 	 */
 	public boolean prendrePalet(double tryDistance, int speed) {
@@ -169,13 +172,13 @@ public class Agent {
 		}		
 		//on se tourne vers là où la distance était la plus petite avec une vitesse plus soutenue, méthode blocante of course.
 		action.rotation(minDistAngle,160,false);
-		
+
 		return minDist;
 	}
 	/**
 	 * Le robot avance jusqu'à ce qu'il détecte la couleur en paramètre.
 	 * @param c Le String de la couleur.
-	 * @param trydistance La distance d'essai pour aller jusqu'à la ligne de couleur en paramètre.
+	 * @param tryDistance La distance d'essai pour aller jusqu'à la ligne de couleur en paramètre.
 	 * @param speed La vitesse à laquelle le robot va avancer.
 	 * @return true si le robot s'est arreté car il a perçu la ligne, 
 	 * false s'il a du s'arrêter au bout d'une distance d'essai en paramètre.
@@ -195,7 +198,8 @@ public class Agent {
 	/**
 	 * Le robot ne fait qu'avancer tant qu'il suit la couleur passée en paramètre sur une
 	 * distance donnée. Il "tâtonne" à gauche et/ou droite pour retrouver la ligne dès qu'il l'a perdue.
-	 * @param color La couleur à suivre.
+	 * @param c La couleur à suivre.
+	 * @param distance La distance à parcourir.
 	 * @return true dès que la distance a été parcourue.
 	 */
 	public boolean suivreColor(String c, int distance) {
@@ -203,9 +207,9 @@ public class Agent {
 		int dist = 0;
 		boolean positif = true;
 		while(true) {
-//			if (Button.ESCAPE.isDown()) {
-//				System.exit(0);
-//			}
+			//			if (Button.ESCAPE.isDown()) {
+			//				System.exit(0);
+			//			}
 			action.avancer(3000, 80, true);
 			while(perception.color.equals(c)) {
 				dist += action.getMouvement().getDistanceTraveled();
@@ -228,7 +232,10 @@ public class Agent {
 	 * Un Timer utilise un thread secondaire pour faire un appel itératif de la méthode
 	 * timedOut de l'interface TimerListener. On utilise cette itération pour mettre à jour
 	 * nos attributs de perception.
-	 * @author que moi <3
+	 * @author GATTACIECCA Bastien
+	 * @author DESCOTILS Juliette
+	 * @author LATIFI Arita
+	 * @author mig
 	 *
 	 */
 	class Boucle implements TimerListener {
