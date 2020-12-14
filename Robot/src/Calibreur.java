@@ -28,7 +28,10 @@ import lejos.robotics.filter.MeanFilter;
  * <b> Dépendance : les méthodes de cette classe ne sont utilisées que dans <code>Calibreur</code> hormis 
  * getNearestSample qui est une méthode statique utilisée dans <code>Perception</code>.</b>
  * 
- * @author nous <3
+ * @author GATTACIECCA Bastien
+ * @author DESCOTILS Juliette
+ * @author LATIFI Arita
+ * @author mig
  *
  */
 public class Calibreur {
