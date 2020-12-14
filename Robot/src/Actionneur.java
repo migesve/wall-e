@@ -13,17 +13,20 @@ import lejos.utility.Delay;
  * est un <code>EV3MediumRegulatedMotor</code>. On utilise une instance de la classe <code>Chassis
  * </code> ainsi que <code>MovePilot</code> pour calculer tous les mouvements dont nous avons besoin
  * à partir de ces paramètres :
- * <li>le diamètre des roues en millimètres (l'unité des distances que nous avons choisie).
- * <li>l'offset, c'est à dire le décalage des roues par rapport au centre du 'segment' qui relie les
+ * <p>- le diamètre des roues en millimètres (l'unité des distances que nous avons choisie).
+ * <p>- l'offset, c'est à dire le décalage des roues par rapport au centre du 'segment' qui relie les
  * deux roues.
- * <li>l' "angular speed" qui définit la vitesse du robot dans les méthodes de rotation.
- * <li>la "linear speed" qui définit la vitesse du robot dans les méthodes de déplacements avant/arrière
- * <li>la "linear acceleration" qui définit la qualité des phases d'accélération en début de mouvement
+ * <p>- l' "angular speed" qui définit la vitesse du robot dans les méthodes de rotation.
+ * <p>- la "linear speed" qui définit la vitesse du robot dans les méthodes de déplacements avant/arrière
+ * <p>- la "linear acceleration" qui définit la qualité des phases d'accélération en début de mouvement
  * et de décélération en fin de mouvement pour une vitesse moteur spécifiée.
  * 
  * <b> Dépendance : les méthodes de cette classe sont utilisées dans <code>Agent</code> uniquement. </b>
  * 
- * @author Nous <3
+ * @author GATTACIECCA Bastien
+ * @author DESCOTILS Juliette
+ * @author LATIFI Arita
+ * @author mig
  */
 public class Actionneur {
 	/**
@@ -124,6 +127,7 @@ public class Actionneur {
 	 * Si le rayon est nul, le robot tourne sur lui-même. Si la distance est nulle, la méthode retourne immédiatement.
 	 * @param radius Le rayon du cercle autour duquel le robot va se déplacer.
 	 * @param distance La distance à parcourir le long de  ce cercle.
+	 * @param nonBloquante si nonBloquante est true, la méthode retourne immédiatement.
 	 */
 	public void travelArc(double radius, double distance, boolean nonBloquante) {
 		mp.travelArc(radius,distance,nonBloquante);
@@ -259,7 +263,10 @@ public class Actionneur {
 	 * le programme boucle tant que l'intervalle de temps n'est pas écoulé, et donc ne rend pas la
 	 * mains pour demander (par exemple) aux moteurs des roues qui eux ne bougent pas pendant l'ouverture
 	 * des pinces d'avancer !
-	 * @author encore nous <3
+	 * @author GATTACIECCA Bastien
+	 * @author DESCOTILS Juliette
+	 * @author LATIFI Arita
+	 * @author mig
 	 */
 	class PincesThread extends Thread  {
 		@SuppressWarnings("static-access")
