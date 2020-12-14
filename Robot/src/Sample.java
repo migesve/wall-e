@@ -10,7 +10,10 @@ import lejos.robotics.filter.MeanFilter;
  * générer les <code>Sample</code> des couleurs de base, et dans <code>Perception</code> pour
  * générer les sample de la couleur perçue par le capteur de couleur. </b>
  * 
- * @author nous <3
+ * @author GATTACIECCA Bastien
+ * @author DESCOTILS Juliette
+ * @author LATIFI Arita
+ * @author mig
  */
 public class Sample {
 	/**
